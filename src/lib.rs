@@ -38,12 +38,12 @@ where
     D: DeserializeOwned,
 {
     use hyper::{Body, Client, Request, Response};
-    async fn body_into_string(body: Response<Body>) -> Result<String, Error> {
+    async fn body_into_string(body: Response<Body>) -> Result<Vec<u8>, Error> {
         let mut body = body.into_body();
-        let mut out = String::new();
+        let mut out = Vec::new();
         while let Some(chunk) = body.next().await {
             let chunk = chunk?;
-            out.push_str(std::str::from_utf8(chunk.as_ref())?);
+            out.extend_from_slice(chunk.as_ref());
         }
         Ok(out)
     };
