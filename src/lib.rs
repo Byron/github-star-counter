@@ -2,7 +2,9 @@
 #[cfg(test)]
 extern crate lazy_static;
 
+use itertools::Itertools;
 use serde::Deserialize;
+use std::io;
 
 type Error = Box<dyn std::error::Error>;
 
@@ -25,10 +27,28 @@ fn fetch_repos(
         .map(|page_number| fetch_page(user, page_number))
         .collect::<Result<Vec<_>, Error>>()?
         .into_iter()
-        .fold(Vec::new(), |mut acc, mut v| {
-            acc.append(&mut v);
-            acc
-        }))
+        .concat())
+}
+
+fn output(mut repos: Vec<Repo>, limit: usize, mut out: impl io::Write) -> Result<(), Error> {
+    let total: usize = repos.iter().map(|r| r.stargazers_count).sum();
+    writeln!(out, "Total: {}", total)?;
+    if limit > 0 {
+        writeln!(out)?;
+    }
+
+    repos.sort_by(|a, b| b.stargazers_count.cmp(&a.stargazers_count));
+    let longest_name = repos.iter().map(|r| r.name.len()).max().unwrap_or(0);
+    for repo in repos.iter().take(limit) {
+        writeln!(
+            out,
+            "{:width$}   ★  {}",
+            repo.name,
+            repo.stargazers_count,
+            width = longest_name
+        )?;
+    }
+    Ok(())
 }
 
 #[derive(Deserialize)]
@@ -41,13 +61,23 @@ struct Repo {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use pretty_assertions::assert_eq;
     use serde_json;
+
     static USER_JSON: &str = include_str!("../test/fixtures/github.com-byron.json");
     static PAGE1_JSON: &str = include_str!("../test/fixtures/github.com-byron-repos-page-1.json");
+    static USER_OUTPUT: &str = include_str!("../test/fixtures/github.com-byron-output.txt");
 
     lazy_static! {
         static ref USER: User = serde_json::from_str(USER_JSON).unwrap();
         static ref REPOS: Vec<Repo> = serde_json::from_str(PAGE1_JSON).unwrap();
+    }
+    #[test]
+    fn output_repos() {
+        let mut buf = Vec::new();
+        output(REPOS.clone(), 10, &mut buf).unwrap();
+
+        assert_eq!(String::from_utf8(buf).unwrap(), USER_OUTPUT);
     }
 
     #[test]
@@ -57,18 +87,20 @@ mod tests {
         let mut user: User = USER.clone();
         user.public_repos = repos_twice.len();
         const PAGE_SIZE: usize = 100;
-        let mut fetch_page_callcount = 0;
+        let mut fetch_page_calls = 0;
+
+        // FETCH with paging
         {
             let fetch_page = |_user: &User, _page: usize| {
-                fetch_page_callcount += 1;
+                fetch_page_calls += 1;
                 Ok(REPOS.clone())
             };
 
             assert_eq!(
-                repos_twice,
-                fetch_repos(&user, PAGE_SIZE, fetch_page).unwrap()
+                fetch_repos(&user, PAGE_SIZE, fetch_page).unwrap(),
+                repos_twice
             );
         }
-        assert_eq!(fetch_page_callcount, 2);
+        assert_eq!(fetch_page_calls, 2);
     }
 }
