@@ -3,7 +3,8 @@
 extern crate lazy_static;
 
 use serde::Deserialize;
-use std::error::Error;
+
+type Error = Box<dyn std::error::Error>;
 
 #[derive(Deserialize)]
 #[cfg_attr(test, derive(Clone))]
@@ -14,16 +15,17 @@ struct User {
 fn fetch_repos(
     user: &User,
     page_size: usize,
-    mut fetch_page: impl FnMut(&User, usize) -> Vec<Repo>,
-) -> Result<Vec<Repo>, Box<dyn Error>> {
+    mut fetch_page: impl FnMut(&User, usize) -> Result<Vec<Repo>, Error>,
+) -> Result<Vec<Repo>, Error> {
     if page_size == 0 {
         return Err("PageSize must be greater than 0".into());
     }
     let page_count = user.public_repos / page_size;
-    Ok((0..=page_count).fold(Vec::new(), |mut acc, page_number| {
-        acc.append(&mut fetch_page(user, page_number));
-        acc
-    }))
+    Ok((0..=page_count)
+        .map(|page_number| fetch_page(user, page_number))
+        .filter_map(Result::ok)
+        .flatten()
+        .collect::<Vec<Repo>>())
 }
 
 #[derive(Deserialize)]
@@ -56,7 +58,7 @@ mod tests {
         {
             let fetch_page = |_user: &User, _page: usize| {
                 fetch_page_callcount += 1;
-                REPOS.clone()
+                Ok(REPOS.clone())
             };
 
             assert_eq!(
