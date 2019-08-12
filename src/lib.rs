@@ -7,9 +7,10 @@ extern crate lazy_static;
 
 use futures::future::join_all;
 use itertools::Itertools;
+use reqwest::r#async::{Client, Response};
+use serde::de::DeserializeOwned;
 use serde::Deserialize;
-use std::future::Future;
-use std::io;
+use std::{future::Future, io};
 
 type Error = Box<dyn std::error::Error>;
 
@@ -26,10 +27,34 @@ struct User {
     public_repos: usize,
 }
 
+struct BasicAuth {
+    username: String,
+    password: Option<String>,
+}
+
+async fn request<D>(url: &str, auth: Option<BasicAuth>) -> Result<D, Error>
+// TODO want Result<impl DeserializeOwned, ...> but that does not compile
+where
+    D: DeserializeOwned,
+{
+    let client = Client::builder().build().expect("valid client");
+    let mut request = client.get(&format!("https://api.github.com/{}", url));
+    if let Some(auth) = auth {
+        request = request.basic_auth(auth.username, auth.password);
+    }
+    let mut r: Response = request.send().await;
+    if r.status().is_success() {
+        r.json();
+    } else {
+        r.json();
+    }
+    unimplemented!()
+}
+
 async fn fetch_repos<F>(
     user: &User,
     page_size: usize,
-    mut fetch_page: impl FnMut(&User, usize) -> F, // would want 'async impl'
+    mut fetch_page: impl FnMut(&User, usize) -> F, // TODO would want 'async impl'
 ) -> Result<Vec<Repo>, Error>
 where
     F: Future<Output = Result<Vec<Repo>, Error>>,
