@@ -7,8 +7,6 @@ extern crate lazy_static;
 
 use futures::future::join_all;
 use itertools::Itertools;
-use hyper::Client;
-use hyper_tls::HttpsConnector;
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use std::{future::Future, io};
@@ -38,19 +36,24 @@ async fn request<D>(url: &str, auth: Option<BasicAuth>) -> Result<D, Error>
 where
     D: DeserializeOwned,
 {
-    let https = HttpsConnector::new(4).expect("TLS initialization failed");
-    let client = Client::builder()
-        .build::<_, hyper::Body>(https);
-    let mut request = client.get(&format!("https://api.github.com/{}", url));
-    if let Some(auth) = auth {
-        request = request.basic_auth(auth.username, auth.password);
-    }
-    let mut r: Response = request.send().await;
-    if r.status().is_success() {
-        r.json();
-    } else {
-        r.json();
-    }
+    let https = hyper_tls::HttpsConnector::new(4).unwrap();
+    let client = hyper::Client::builder().build::<_, hyper::Body>(https);
+
+    //    let https = HttpsConnector::new(1).expect("TLS initialization failed");
+    //    let client = Client::builder().build::<_, hyper::Body>(https);
+    //    let mut request = client
+    //        .get(
+    //            format!("https://api.github.com/{}", url)
+    //                .parse()
+    //                .expect("valid URL"),
+    //        )
+    //        .await;
+    //    if let Some(auth) = auth {
+    //        request = request.basic_auth(auth.username, auth.password);
+    //    }
+    //    if request.status().is_success() {
+    //        request.json();
+    //    }
     unimplemented!()
 }
 
