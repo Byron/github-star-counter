@@ -6,6 +6,7 @@
 extern crate lazy_static;
 
 use futures::future::join_all;
+use hyper;
 use itertools::Itertools;
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
@@ -36,18 +37,23 @@ async fn request<D>(url: &str, auth: Option<BasicAuth>) -> Result<D, Error>
 where
     D: DeserializeOwned,
 {
-    let https = hyper_tls::HttpsConnector::new(4).unwrap();
-    let client = hyper::Client::builder().build::<_, hyper::Body>(https);
+    use hyper::{Body, Client, Request, Response};
+    fn body_into_string(body: Body) {};
+    let https = hyper_tls::HttpsConnector::new(1)?;
+    let client = Client::builder().build::<_, Body>(https);
 
-    //    let https = HttpsConnector::new(1).expect("TLS initialization failed");
-    //    let client = Client::builder().build::<_, hyper::Body>(https);
-    //    let mut request = client
-    //        .get(
-    //            format!("https://api.github.com/{}", url)
-    //                .parse()
-    //                .expect("valid URL"),
-    //        )
-    //        .await;
+    let mut req = Request::new(Body::empty());
+    req.headers_mut()
+        .append("User-Agent", "GithubStargcounter.rs".parse()?);
+    *req.uri_mut() = format!("https://api.github.com/{}", url)
+        .parse()
+        .expect("valid URL");
+
+    let mut res: Response<_> = client.request(req).await?;
+    let status = res.status();
+    let body_str = body_into_string(res.into_body());
+
+    if status.is_success() {}
     //    if let Some(auth) = auth {
     //        request = request.basic_auth(auth.username, auth.password);
     //    }
