@@ -30,19 +30,26 @@ fn output_repos_with_threshold() {
 
 #[tokio::test]
 async fn fetch_all_repos_paged() {
+    use std::sync::atomic::{AtomicUsize, Ordering};
     let mut repos_twice: Vec<_> = REPOS.clone();
     repos_twice.extend_from_slice(&REPOS);
     let mut user: User = USER.clone();
     user.public_repos = repos_twice.len();
     const PAGE_SIZE: usize = 100;
+    let fetch_page_calls = AtomicUsize::new(0);
 
     // FETCH with paging
     {
-        let fetch_page = async move |_user: &User, _page: usize| Ok(REPOS.clone());
+        let fetch_page_calls = &fetch_page_calls;
+        let fetch_page = async move |_user: &User, _page: usize| {
+            fetch_page_calls.fetch_add(1, Ordering::Acquire);
+            Ok(REPOS.clone())
+        };
 
         assert_eq!(
             fetch_repos(&user, PAGE_SIZE, fetch_page).await.unwrap(),
             repos_twice
         );
     }
+    assert_eq!(fetch_page_calls.load(Ordering::Relaxed), 2);
 }
