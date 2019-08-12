@@ -28,26 +28,21 @@ fn output_repos_with_threshold() {
     assert_eq!(String::from_utf8(buf).unwrap(), USER_OUTPUT_THRESHOLD_30);
 }
 
-#[test]
-fn fetch_all_repos_paged() {
+#[tokio::test]
+async fn fetch_all_repos_paged() {
     let mut repos_twice: Vec<_> = REPOS.clone();
     repos_twice.extend_from_slice(&REPOS);
     let mut user: User = USER.clone();
     user.public_repos = repos_twice.len();
     const PAGE_SIZE: usize = 100;
-    let mut fetch_page_calls = 0;
 
     // FETCH with paging
     {
-        let fetch_page = |_user: &User, _page: usize| {
-            fetch_page_calls += 1;
-            Ok(REPOS.clone())
-        };
+        let fetch_page = async move |_user: &User, _page: usize| Ok(REPOS.clone());
 
         assert_eq!(
-            fetch_repos(&user, PAGE_SIZE, fetch_page).unwrap(),
+            fetch_repos(&user, PAGE_SIZE, fetch_page).await.unwrap(),
             repos_twice
         );
     }
-    assert_eq!(fetch_page_calls, 2);
 }
