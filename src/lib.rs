@@ -7,7 +7,8 @@ extern crate lazy_static;
 
 use futures::future::join_all;
 use itertools::Itertools;
-use reqwest::r#async::{Client, Response};
+use hyper::Client;
+use hyper_tls::HttpsConnector;
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use std::{future::Future, io};
@@ -37,7 +38,9 @@ async fn request<D>(url: &str, auth: Option<BasicAuth>) -> Result<D, Error>
 where
     D: DeserializeOwned,
 {
-    let client = Client::builder().build().expect("valid client");
+    let https = HttpsConnector::new(4).expect("TLS initialization failed");
+    let client = Client::builder()
+        .build::<_, hyper::Body>(https);
     let mut request = client.get(&format!("https://api.github.com/{}", url));
     if let Some(auth) = auth {
         request = request.basic_auth(auth.username, auth.password);
