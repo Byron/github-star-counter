@@ -30,16 +30,24 @@ fn fetch_repos(
         .concat())
 }
 
-fn output(mut repos: Vec<Repo>, limit: usize, mut out: impl io::Write) -> Result<(), Error> {
+fn output(
+    mut repos: Vec<Repo>,
+    repo_limit: usize,
+    stargazer_threshold: usize,
+    mut out: impl io::Write,
+) -> Result<(), Error> {
     let total: usize = repos.iter().map(|r| r.stargazers_count).sum();
     writeln!(out, "Total: {}", total)?;
-    if limit > 0 {
+    if repo_limit > 0 {
         writeln!(out)?;
     }
 
     repos.sort_by(|a, b| b.stargazers_count.cmp(&a.stargazers_count));
-    let longest_name = repos.iter().map(|r| r.name.len()).max().unwrap_or(0);
-    for repo in repos.iter().take(limit) {
+    let repo_iter = repos
+        .iter()
+        .filter(|r| r.stargazers_count >= stargazer_threshold);
+    let longest_name = repo_iter.clone().map(|r| r.name.len()).max().unwrap_or(0);
+    for repo in repo_iter.take(repo_limit) {
         writeln!(
             out,
             "{:width$}   ★  {}",
@@ -67,6 +75,8 @@ mod tests {
     static USER_JSON: &str = include_str!("../test/fixtures/github.com-byron.json");
     static PAGE1_JSON: &str = include_str!("../test/fixtures/github.com-byron-repos-page-1.json");
     static USER_OUTPUT: &str = include_str!("../test/fixtures/github.com-byron-output.txt");
+    static USER_OUTPUT_THRESHOLD_30: &str =
+        include_str!("../test/fixtures/github.com-byron-output-threshold-30.txt");
 
     lazy_static! {
         static ref USER: User = serde_json::from_str(USER_JSON).unwrap();
@@ -75,9 +85,17 @@ mod tests {
     #[test]
     fn output_repos() {
         let mut buf = Vec::new();
-        output(REPOS.clone(), 10, &mut buf).unwrap();
+        output(REPOS.clone(), 10, 0, &mut buf).unwrap();
 
         assert_eq!(String::from_utf8(buf).unwrap(), USER_OUTPUT);
+    }
+
+    #[test]
+    fn output_repos_with_threshold() {
+        let mut buf = Vec::new();
+        output(REPOS.clone(), 10, 30, &mut buf).unwrap();
+
+        assert_eq!(String::from_utf8(buf).unwrap(), USER_OUTPUT_THRESHOLD_30);
     }
 
     #[test]
