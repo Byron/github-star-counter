@@ -23,9 +23,12 @@ fn fetch_repos(
     let page_count = user.public_repos / page_size;
     Ok((0..=page_count)
         .map(|page_number| fetch_page(user, page_number))
-        .filter_map(Result::ok)
-        .flatten()
-        .collect::<Vec<Repo>>())
+        .collect::<Result<Vec<_>, Error>>()?
+        .into_iter()
+        .fold(Vec::new(), |mut acc, mut v| {
+            acc.append(&mut v);
+            acc
+        }))
 }
 
 #[derive(Deserialize)]
