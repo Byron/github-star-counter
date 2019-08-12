@@ -3,7 +3,7 @@
 use tokio::net::TcpListener;
 use tokio::prelude::*;
 
-#[tokio::main]
+#[tokio::main(single_thread)]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = "127.0.0.1:8080".parse()?;
     let mut listener = TcpListener::bind(&addr).unwrap();
