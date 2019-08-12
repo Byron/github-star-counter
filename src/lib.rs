@@ -38,7 +38,15 @@ where
     D: DeserializeOwned,
 {
     use hyper::{Body, Client, Request, Response};
-    fn body_into_string(body: Body) {};
+    async fn body_into_string(body: Response<Body>) -> Result<String, Error> {
+        let mut body = body.into_body();
+        let mut out = String::new();
+        while let Some(chunk) = body.next().await {
+            let chunk = chunk?;
+            out.push_str(std::str::from_utf8(chunk.as_ref())?);
+        }
+        Ok(out)
+    };
     let https = hyper_tls::HttpsConnector::new(1)?;
     let client = Client::builder().build::<_, Body>(https);
 
@@ -51,7 +59,7 @@ where
 
     let mut res: Response<_> = client.request(req).await?;
     let status = res.status();
-    let body_str = body_into_string(res.into_body());
+    let body_str = body_into_string(res);
 
     if status.is_success() {}
     //    if let Some(auth) = auth {
