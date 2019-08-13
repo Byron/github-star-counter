@@ -5,7 +5,7 @@
 #[cfg(test)]
 extern crate lazy_static;
 
-use crate::request::BasicAuth;
+pub use crate::request::BasicAuth;
 use futures::future::join_all;
 use itertools::Itertools;
 use serde::Deserialize;

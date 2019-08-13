@@ -1,11 +1,12 @@
 use super::Error;
 use hyper::{Body, Client, Request, Response};
+use log::info;
 use serde::{de::DeserializeOwned, Deserialize};
 
 #[derive(Clone)]
 pub struct BasicAuth {
-    username: String,
-    password: Option<String>,
+    pub username: String,
+    pub password: Option<String>,
 }
 
 impl ToString for BasicAuth {
@@ -45,11 +46,13 @@ where
         req.headers_mut()
             .append("Authorization", auth.to_string().parse()?);
     }
-    *req.uri_mut() = format!("https://api.github.com/{}", url)
-        .parse()
-        .expect("valid URL");
+    let url = format!("https://api.github.com/{}", url);
+    *req.uri_mut() = url.parse().expect("valid URL");
 
+    info!("{} - requested", url);
+    let started = std::time::Instant::now();
     let res = client.request(req).await?;
+    info!("{} - received in {:?}", url, started.elapsed());
     let status = res.status();
     let bytes = request_body_into_string(res).await?;
 
