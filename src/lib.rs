@@ -7,6 +7,7 @@ extern crate lazy_static;
 
 pub use crate::request::BasicAuth;
 use futures::future::join_all;
+use futures::FutureExt;
 use itertools::Itertools;
 use serde::Deserialize;
 use std::{future::Future, io};
@@ -20,13 +21,13 @@ pub type Error = Box<dyn std::error::Error>;
 struct Repo {
     stargazers_count: usize,
     name: String,
-    owner: RepoOwner
+    owner: RepoOwner,
 }
 
 #[derive(Deserialize)]
 #[cfg_attr(test, derive(Debug, Clone, Eq, PartialEq))]
 struct RepoOwner {
-    login: String
+    login: String,
 }
 
 #[derive(Deserialize, Clone)]
@@ -63,28 +64,49 @@ pub async fn count_stars(
         stargazer_threshold,
     }: Options,
 ) -> Result<(), Error> {
+    use std::iter;
+
     let user_url = format!("users/{}", username);
-    let user: User = request::json(&user_url, auth.as_ref()).await?;
+    let user: User = request::json(user_url.clone(), auth.clone()).await?;
+    let orgs_url = format!("{}/orgs", user_url);
+    let orgs: Vec<RepoOwner> = request::json(orgs_url, auth.clone()).await?;
 
     // TODO make this into 'async' (without move) closure so we don't move these
     // It's strange that the move happening at the end is not allowed, it should be fine
     // to have the closure own these after they have been used.
-    let auth_closure = &auth;
-    let repos = fetch_repos(&user, page_size, async move |user, page_number| {
-        let repos_paged_url = format!(
-            "users/{}/repos?per_page={}&page={}",
-            user.login,
-            page_size,
-            page_number + 1
-        );
-        request::json(&repos_paged_url, auth_closure.as_ref()).await
-    })
-    .await?;
+
+    // TODO: is there an easy way to abort all unresolved futures if one of them failed?
+    let orgs = futures::future::join_all(
+        orgs.into_iter()
+            .map(|user| request::json_log_failure::<User>(format!("users/{}",user.login), auth.clone())),
+    )
+    .await;
+    let repos: Vec<_> = futures::future::join_all(
+        iter::once(user)
+            .chain(orgs.into_iter().filter_map(|v| v))
+            .map(|user| {
+                fetch_repos(user, page_size, |user, page_number| {
+                    let repos_paged_url = format!(
+                        "users/{}/repos?per_page={}&page={}",
+                        user.login,
+                        page_size,
+                        page_number + 1
+                    );
+                    request::json_log_failure(repos_paged_url, auth.clone())
+                        .map(|v| v.ok_or_else(|| "we will ignore errors".into()))
+                })
+            }),
+    )
+    .await
+    .into_iter()
+    .filter_map(|v| v.ok())
+    .flatten()
+    .collect();
     output(repos, repo_limit, stargazer_threshold, out)
 }
 
 async fn fetch_repos<F>(
-    user: &User,
+    user: User, // TODO: can this also be &User?
     page_size: usize,
     mut fetch_page: impl FnMut(User, usize) -> F, // TODO would want 'async impl' for -> F; and &User instead of User!
 ) -> Result<Vec<Repo>, Error>

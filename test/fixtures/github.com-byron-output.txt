@@ -1,8 +1,8 @@
-Total: 768
+Total: 769
 
 google-apis-rs              ★  283
 dua-cli                     ★  209
-open-rs                     ★  40
+open-rs                     ★  41
 yup-hyper-mock              ★  27
 crates-io-cli-rs            ★  25
 termbook                    ★  24

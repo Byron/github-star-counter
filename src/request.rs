@@ -1,6 +1,6 @@
 use super::Error;
 use hyper::{Body, Client, Request, Response};
-use log::info;
+use log::{error, info};
 use serde::{de::DeserializeOwned, Deserialize};
 
 #[derive(Clone)]
@@ -31,7 +31,22 @@ async fn request_body_into_string(body: Response<Body>) -> Result<Vec<u8>, Error
     Ok(out)
 }
 
-pub async fn json<D>(url: &str, auth: Option<&BasicAuth>) -> Result<D, Error>
+pub async fn json_log_failure<D>(url: String, auth: Option<BasicAuth>) -> Option<D>
+// TODO want Result<impl DeserializeOwned, ...> but that does not compile
+where
+    D: DeserializeOwned,
+{
+    match json(url, auth).await {
+        Ok(v) => Some(v),
+        Err(e) => {
+            error!("{}", e);
+            None
+        }
+    }
+}
+
+// TODO: Can the url string also NOT be owned?
+pub async fn json<D>(url: String, auth: Option<BasicAuth>) -> Result<D, Error>
 // TODO want Result<impl DeserializeOwned, ...> but that does not compile
 where
     D: DeserializeOwned,

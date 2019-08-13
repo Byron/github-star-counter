@@ -1,0 +1,44 @@
+[
+  {
+    "login": "mrv-developers",
+    "id": 503655,
+    "node_id": "MDEyOk9yZ2FuaXphdGlvbjUwMzY1NQ==",
+    "url": "https://api.github.com/orgs/mrv-developers",
+    "repos_url": "https://api.github.com/orgs/mrv-developers/repos",
+    "events_url": "https://api.github.com/orgs/mrv-developers/events",
+    "hooks_url": "https://api.github.com/orgs/mrv-developers/hooks",
+    "issues_url": "https://api.github.com/orgs/mrv-developers/issues",
+    "members_url": "https://api.github.com/orgs/mrv-developers/members{/member}",
+    "public_members_url": "https://api.github.com/orgs/mrv-developers/public_members{/member}",
+    "avatar_url": "https://avatars1.githubusercontent.com/u/503655?v=4",
+    "description": ""
+  },
+  {
+    "login": "gitpython-developers",
+    "id": 503709,
+    "node_id": "MDEyOk9yZ2FuaXphdGlvbjUwMzcwOQ==",
+    "url": "https://api.github.com/orgs/gitpython-developers",
+    "repos_url": "https://api.github.com/orgs/gitpython-developers/repos",
+    "events_url": "https://api.github.com/orgs/gitpython-developers/events",
+    "hooks_url": "https://api.github.com/orgs/gitpython-developers/hooks",
+    "issues_url": "https://api.github.com/orgs/gitpython-developers/issues",
+    "members_url": "https://api.github.com/orgs/gitpython-developers/members{/member}",
+    "public_members_url": "https://api.github.com/orgs/gitpython-developers/public_members{/member}",
+    "avatar_url": "https://avatars3.githubusercontent.com/u/503709?v=4",
+    "description": ""
+  },
+  {
+    "login": "share-secrets-safely",
+    "id": 37825133,
+    "node_id": "MDEyOk9yZ2FuaXphdGlvbjM3ODI1MTMz",
+    "url": "https://api.github.com/orgs/share-secrets-safely",
+    "repos_url": "https://api.github.com/orgs/share-secrets-safely/repos",
+    "events_url": "https://api.github.com/orgs/share-secrets-safely/events",
+    "hooks_url": "https://api.github.com/orgs/share-secrets-safely/hooks",
+    "issues_url": "https://api.github.com/orgs/share-secrets-safely/issues",
+    "members_url": "https://api.github.com/orgs/share-secrets-safely/members{/member}",
+    "public_members_url": "https://api.github.com/orgs/share-secrets-safely/public_members{/member}",
+    "avatar_url": "https://avatars3.githubusercontent.com/u/37825133?v=4",
+    "description": null
+  }
+]

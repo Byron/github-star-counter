@@ -41,13 +41,17 @@ async fn fetch_all_repos_paged() {
     // FETCH with paging
     {
         let fetch_page_calls = &fetch_page_calls;
-        let fetch_page = async move |_user: User, _page: usize| {
+        let fetch_page = async move |user: User, _page: usize| {
             fetch_page_calls.fetch_add(1, Ordering::Acquire);
-            Ok(REPOS.clone())
+            Ok(if user.login == "Byron" {
+                REPOS.clone()
+            } else {
+                Vec::new()
+            })
         };
 
         assert_eq!(
-            fetch_repos(&user, PAGE_SIZE, fetch_page).await.unwrap(),
+            fetch_repos(user, PAGE_SIZE, fetch_page).await.unwrap(),
             repos_twice
         );
     }
