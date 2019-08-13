@@ -20,11 +20,18 @@ pub type Error = Box<dyn std::error::Error>;
 struct Repo {
     stargazers_count: usize,
     name: String,
+    owner: RepoOwner
 }
 
 #[derive(Deserialize)]
-#[cfg_attr(test, derive(Clone))]
+#[cfg_attr(test, derive(Debug, Clone, Eq, PartialEq))]
+struct RepoOwner {
+    login: String
+}
+
+#[derive(Deserialize, Clone)]
 struct User {
+    login: String,
     public_repos: usize,
 }
 
@@ -62,12 +69,11 @@ pub async fn count_stars(
     // TODO make this into 'async' (without move) closure so we don't move these
     // It's strange that the move happening at the end is not allowed, it should be fine
     // to have the closure own these after they have been used.
-    let user_url_closure = &user_url;
     let auth_closure = &auth;
-    let repos = fetch_repos(&user, page_size, async move |_user, page_number| {
+    let repos = fetch_repos(&user, page_size, async move |user, page_number| {
         let repos_paged_url = format!(
-            "{}/repos?per_page={}&page={}",
-            user_url_closure,
+            "users/{}/repos?per_page={}&page={}",
+            user.login,
             page_size,
             page_number + 1
         );
@@ -80,7 +86,7 @@ pub async fn count_stars(
 async fn fetch_repos<F>(
     user: &User,
     page_size: usize,
-    mut fetch_page: impl FnMut(&User, usize) -> F, // TODO would want 'async impl'
+    mut fetch_page: impl FnMut(User, usize) -> F, // TODO would want 'async impl' for -> F; and &User instead of User!
 ) -> Result<Vec<Repo>, Error>
 where
     F: Future<Output = Result<Vec<Repo>, Error>>,
@@ -89,7 +95,7 @@ where
         return Err("PageSize must be greater than 0".into());
     }
     let page_count = user.public_repos / page_size;
-    let futures = (0..=page_count).map(|page_number| fetch_page(user, page_number));
+    let futures = (0..=page_count).map(|page_number| fetch_page(user.clone(), page_number));
     let results: Vec<Result<Vec<Repo>, Error>> = join_all(futures).await;
     Ok(results
         .into_iter()

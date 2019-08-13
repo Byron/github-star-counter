@@ -41,7 +41,7 @@ async fn fetch_all_repos_paged() {
     // FETCH with paging
     {
         let fetch_page_calls = &fetch_page_calls;
-        let fetch_page = async move |_user: &User, _page: usize| {
+        let fetch_page = async move |_user: User, _page: usize| {
             fetch_page_calls.fetch_add(1, Ordering::Acquire);
             Ok(REPOS.clone())
         };

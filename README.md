@@ -12,3 +12,5 @@ changes.
 
 Please note that at the time of writing, 2019-08-13, the ecosystem wasn't ready.
 Search the code for `TODO` to learn about workarounds/issues still present.
+
+* `async || {}` is not yet ready, and needs to be move. This comes with the additional limitation that references can't be passed as argument, everything it sees must be owned.
