@@ -19,7 +19,7 @@ pub struct Args {
     /// The amount of stars a repository should have at the least to be considered for the repository list.
     /// Note that this does not affect your total star count.
     /// If 0, all repositories are considered.
-    #[structopt(short = "s", long = "stargazer-threshold", default_value = "0")]
+    #[structopt(short = "s", long = "stargazer-threshold", default_value = "1")]
     pub stargazer_threshold: usize,
     #[structopt(flatten)]
     pub auth: RequestUser,
