@@ -2,6 +2,7 @@ use super::Error;
 use hyper::{Body, Client, Request, Response};
 use serde::{de::DeserializeOwned, Deserialize};
 
+#[derive(Clone)]
 pub struct BasicAuth {
     username: String,
     password: Option<String>,
@@ -29,7 +30,7 @@ async fn request_body_into_string(body: Response<Body>) -> Result<Vec<u8>, Error
     Ok(out)
 }
 
-pub async fn json<D>(url: &str, auth: Option<BasicAuth>) -> Result<D, Error>
+pub async fn json<D>(url: &str, auth: Option<&BasicAuth>) -> Result<D, Error>
 // TODO want Result<impl DeserializeOwned, ...> but that does not compile
 where
     D: DeserializeOwned,

@@ -5,6 +5,7 @@
 #[cfg(test)]
 extern crate lazy_static;
 
+use crate::request::BasicAuth;
 use futures::future::join_all;
 use itertools::Itertools;
 use serde::Deserialize;
@@ -12,7 +13,7 @@ use std::{future::Future, io};
 
 mod request;
 
-type Error = Box<dyn std::error::Error>;
+pub type Error = Box<dyn std::error::Error>;
 
 #[derive(Deserialize)]
 #[cfg_attr(test, derive(Debug, Clone, Eq, PartialEq))]
@@ -25,6 +26,53 @@ struct Repo {
 #[cfg_attr(test, derive(Clone))]
 struct User {
     public_repos: usize,
+}
+
+pub struct Options {
+    auth: Option<BasicAuth>,
+    page_size: usize,
+    repo_limit: usize,
+    stargazer_threshold: usize,
+}
+
+impl Default for Options {
+    fn default() -> Self {
+        Self {
+            auth: None,
+            page_size: 100,
+            repo_limit: 10,
+            stargazer_threshold: 0,
+        }
+    }
+}
+
+pub async fn count_stars(
+    username: &str,
+    out: impl io::Write,
+    Options {
+        auth,
+        page_size,
+        repo_limit,
+        stargazer_threshold,
+    }: Options,
+) -> Result<(), Error> {
+    let user_url = format!("users/{}", username);
+    let user: User = request::json(&user_url, auth.as_ref()).await?;
+
+    // TODO make this into 'async' (without move) closure so we don't move these
+    // It's strange that the move happening at the end is not allowed, it should be fine
+    // to have the closure own these after they have been used.
+    let user_url_closure = &user_url;
+    let auth_closure = &auth;
+    let repos = fetch_repos(&user, page_size, async move |_user, page_number| {
+        let repos_paged_url = format!(
+            "{}/repos?per_page={}&page={}",
+            user_url_closure, page_size, page_number
+        );
+        request::json(&repos_paged_url, auth_closure.as_ref()).await
+    })
+    .await?;
+    output(repos, repo_limit, stargazer_threshold, out)
 }
 
 async fn fetch_repos<F>(
