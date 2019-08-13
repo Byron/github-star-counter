@@ -65,6 +65,8 @@ Search the code for `TODO` to learn about workarounds/issues still present.
 
 ### Changes
 
+#### v1.0.1 - More parallel query of user's repositories
+
 #### v1.0.0 - Initial Release
 
 
