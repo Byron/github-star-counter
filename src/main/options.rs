@@ -6,6 +6,10 @@ use structopt::StructOpt;
 #[derive(Debug, StructOpt)]
 #[structopt(about = "Aggregate your repositories' stars in GitHub!")]
 pub struct Args {
+    /// If set, organizations one is a member of will not be taken into consideration.
+    /// This speeds up the query, but is less precise.
+    #[structopt(long = "no-orgs")]
+    pub no_orgs: bool,
     /// The amount of repositories per page when asking for your repository details
     #[structopt(short = "p", long = "page-size", default_value = "50")]
     pub page_size: usize,
@@ -47,6 +51,7 @@ pub struct RequestUser {
 impl From<Args> for Options {
     fn from(
         Args {
+            no_orgs,
             repo_limit,
             stargazer_threshold,
             page_size,
@@ -56,6 +61,7 @@ impl From<Args> for Options {
         }: Args,
     ) -> Self {
         Options {
+            no_orgs,
             page_size,
             repo_limit,
             stargazer_threshold,

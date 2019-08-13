@@ -37,6 +37,7 @@ struct User {
 }
 
 pub struct Options {
+    pub no_orgs: bool,
     pub auth: Option<BasicAuth>,
     pub page_size: usize,
     pub repo_limit: usize,
@@ -47,6 +48,7 @@ impl Default for Options {
     fn default() -> Self {
         Self {
             auth: None,
+            no_orgs: false,
             page_size: 100,
             repo_limit: 10,
             stargazer_threshold: 0,
@@ -58,6 +60,7 @@ pub async fn count_stars(
     username: &str,
     out: impl io::Write,
     Options {
+        no_orgs,
         auth,
         page_size,
         repo_limit,
@@ -69,17 +72,21 @@ pub async fn count_stars(
     let user_url = format!("users/{}", username);
     let user: User = request::json(user_url.clone(), auth.clone()).await?;
     let orgs_url = format!("{}/orgs", user_url);
-    let orgs: Vec<RepoOwner> = request::json(orgs_url, auth.clone()).await?;
+    let orgs = if !no_orgs {
+        let orgs: Vec<RepoOwner> = request::json(orgs_url, auth.clone()).await?;
 
-    // TODO make this into 'async' (without move) closure so we don't move these
-    // It's strange that the move happening at the end is not allowed, it should be fine
-    // to have the closure own these after they have been used.
+        // TODO make this into 'async' (without move) closure so we don't move these
+        // It's strange that the move happening at the end is not allowed, it should be fine
+        // to have the closure own these after they have been used.
 
-    // TODO: is there an easy way to abort all unresolved futures if one of them failed?
-    let orgs = futures::future::join_all(orgs.into_iter().map(|user| {
-        request::json_log_failure::<User>(format!("users/{}", user.login), auth.clone())
-    }))
-    .await;
+        // TODO: is there an easy way to abort all unresolved futures if one of them failed?
+        futures::future::join_all(orgs.into_iter().map(|user| {
+            request::json_log_failure::<User>(format!("users/{}", user.login), auth.clone())
+        }))
+        .await
+    } else {
+        Vec::new()
+    };
     let repos: Vec<_> = futures::future::join_all(
         iter::once(user)
             .chain(orgs.into_iter().filter_map(|v| v))
