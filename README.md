@@ -8,6 +8,22 @@ It features the following capabilities:
 The code was done synchronously first, and then moved to async with a surprisingly small amount of
 changes.
 
+The greatest difficulties were around getting https to work. Besides, it's clearly a learning process
+to understand the implications of futures better. Constructs with `async` tend to _look_ synchronous,
+but show their teeth closures and ownership. Everything is solvable, just own everything, yet I think
+more borrowing will be enabled once `async` lands on _stable_.
+
+Something I absolutely agree with is the [statements in the async book](https://rust-lang.github.io/async-book/01_getting_started/02_why_async.html)
+which indicate that not everything needs to be async. Personally, I would probably start `sync`, and
+wait for performance requirements to change before making the switch.
+
+Using async code already is quite trivial.
+
+Something I look forward to is to see fully-async libraries emerge, for example, to interact with `git`,
+which will perform better than existing libraries written in other languages.
+
+With `async`, Rust can be even more so change the game!
+
 ### Installation
 
 ```bash
