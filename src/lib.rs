@@ -152,7 +152,7 @@ fn output(
         .collect();
 
     writeln!(out, "Total: {}", total)?;
-    if !total_by_user_only.is_empty() {
+    if !total_by_user_only.is_empty() && !total_by_orgs_only.is_empty() {
         writeln!(
             out,
             "Total for {}: {}",

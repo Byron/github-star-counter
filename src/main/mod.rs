@@ -6,7 +6,7 @@ use structopt::StructOpt;
 
 mod options;
 
-#[tokio::main(single_thread)]
+#[tokio::main]
 async fn main() -> Result<(), Error> {
     use options::Args;
 
