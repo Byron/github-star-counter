@@ -12,6 +12,8 @@ use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use std::{future::Future, io};
 
+//mod reqwest;
+
 type Error = Box<dyn std::error::Error>;
 
 #[derive(Deserialize)]
@@ -32,13 +34,13 @@ struct BasicAuth {
     password: Option<String>,
 }
 
-async fn request<D>(url: &str, auth: Option<BasicAuth>) -> Result<D, Error>
+async fn request_json<D>(url: &str, auth: Option<BasicAuth>) -> Result<D, Error>
 // TODO want Result<impl DeserializeOwned, ...> but that does not compile
 where
     D: DeserializeOwned,
 {
     use hyper::{Body, Client, Request, Response};
-    async fn body_into_string(body: Response<Body>) -> Result<Vec<u8>, Error> {
+    async fn request_body_into_string(body: Response<Body>) -> Result<Vec<u8>, Error> {
         let mut body = body.into_body();
         let mut out = Vec::new();
         while let Some(chunk) = body.next().await {
@@ -52,14 +54,14 @@ where
 
     let mut req = Request::new(Body::empty());
     req.headers_mut()
-        .append("User-Agent", "GithubStargcounter.rs".parse()?);
+        .append("User-Agent", "GitHub StarCounter.rs".parse()?);
     *req.uri_mut() = format!("https://api.github.com/{}", url)
         .parse()
         .expect("valid URL");
 
     let mut res: Response<_> = client.request(req).await?;
     let status = res.status();
-    let body_str = body_into_string(res);
+    let body_str = request_body_into_string(res);
 
     if status.is_success() {}
     //    if let Some(auth) = auth {
