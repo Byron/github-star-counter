@@ -7,7 +7,7 @@ extern crate lazy_static;
 
 pub use crate::request::BasicAuth;
 use futures::future::join_all;
-use futures::FutureExt;
+use futures::{FutureExt, TryFutureExt};
 use itertools::Itertools;
 use serde::Deserialize;
 use std::{future::Future, io};
@@ -72,7 +72,19 @@ pub async fn count_stars(
     let user_url = format!("users/{}", username);
     let user: User = request::json(user_url.clone(), auth.clone()).await?;
     let orgs_url = format!("{}/orgs", user_url);
-    let orgs = if !no_orgs {
+    let fetch_repos_for_user = |user| {
+        fetch_repos(user, page_size, |user, page_number| {
+            let repos_paged_url = format!(
+                "users/{}/repos?per_page={}&page={}",
+                user.login,
+                page_size,
+                page_number + 1
+            );
+            request::json_log_failure(repos_paged_url, auth.clone())
+        })
+    };
+    let fetch_main_user_future = fetch_repos_for_user(user);
+    let fetch_orgs_repos_futures = if !no_orgs {
         let orgs: Vec<RepoOwner> = request::json(orgs_url, auth.clone()).await?;
 
         // TODO make this into 'async' (without move) closure so we don't move these
@@ -80,28 +92,21 @@ pub async fn count_stars(
         // to have the closure own these after they have been used.
 
         // TODO: is there an easy way to abort all unresolved futures if one of them failed?
-        futures::future::join_all(orgs.into_iter().map(|user| {
-            request::json_log_failure::<User>(format!("users/{}", user.login), auth.clone())
-        }))
-        .await
+        orgs.into_iter()
+            .map(|user| {
+                request::json_log_failure::<User>(format!("users/{}", user.login), auth.clone())
+                    .and_then(fetch_repos_for_user)
+            })
+            .collect()
     } else {
         Vec::new()
     };
     let repos: Vec<_> = futures::future::join_all(
-        iter::once(user)
-            .chain(orgs.into_iter().filter_map(|v| v))
-            .map(|user| {
-                fetch_repos(user, page_size, |user, page_number| {
-                    let repos_paged_url = format!(
-                        "users/{}/repos?per_page={}&page={}",
-                        user.login,
-                        page_size,
-                        page_number + 1
-                    );
-                    request::json_log_failure(repos_paged_url, auth.clone())
-                        .map(|v| v.ok_or_else(|| "we will ignore errors".into()))
-                })
-            }),
+        iter::once(fetch_main_user_future.boxed_local()).chain(
+            fetch_orgs_repos_futures
+                .into_iter()
+                .map(|f| f.boxed_local()),
+        ),
     )
     .await
     .into_iter()
