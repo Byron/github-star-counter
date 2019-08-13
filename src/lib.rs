@@ -29,10 +29,10 @@ struct User {
 }
 
 pub struct Options {
-    auth: Option<BasicAuth>,
-    page_size: usize,
-    repo_limit: usize,
-    stargazer_threshold: usize,
+    pub auth: Option<BasicAuth>,
+    pub page_size: usize,
+    pub repo_limit: usize,
+    pub stargazer_threshold: usize,
 }
 
 impl Default for Options {
@@ -67,7 +67,9 @@ pub async fn count_stars(
     let repos = fetch_repos(&user, page_size, async move |_user, page_number| {
         let repos_paged_url = format!(
             "{}/repos?per_page={}&page={}",
-            user_url_closure, page_size, page_number + 1
+            user_url_closure,
+            page_size,
+            page_number + 1
         );
         request::json(&repos_paged_url, auth_closure.as_ref()).await
     })
