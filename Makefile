@@ -1,10 +1,12 @@
 help:
 	$(info -- Targets -------------------------------------------)
+	$(info tests                                  | run all tests)
+	$(info -- Less Useful ---------------------------------------)
 	$(info fixtures              | re-generate fixtures for tests)
-	$(info tests                 | run all tests)
 
 tests:
 	cargo test --lib
+
 fixtures:
 	curl "https://api.github.com/users/Byron" > test/fixtures/github.com-byron.json
 	curl "https://api.github.com/users/Byron/orgs" > test/fixtures/github.com-byron-orgs.json
