@@ -1,7 +1,8 @@
 use super::Error;
+use hyper::{Body, Client, Request, Response};
 use serde::{de::DeserializeOwned, Deserialize};
 
-struct BasicAuth {
+pub struct BasicAuth {
     username: String,
     password: Option<String>,
 }
@@ -18,21 +19,21 @@ impl ToString for BasicAuth {
     }
 }
 
-async fn json<D>(url: &str, auth: Option<BasicAuth>) -> Result<D, Error>
+async fn request_body_into_string(body: Response<Body>) -> Result<Vec<u8>, Error> {
+    let mut body = body.into_body();
+    let mut out = Vec::new();
+    while let Some(chunk) = body.next().await {
+        let chunk = chunk?;
+        out.extend_from_slice(chunk.as_ref());
+    }
+    Ok(out)
+}
+
+pub async fn json<D>(url: &str, auth: Option<BasicAuth>) -> Result<D, Error>
 // TODO want Result<impl DeserializeOwned, ...> but that does not compile
 where
     D: DeserializeOwned,
 {
-    use hyper::{Body, Client, Request, Response};
-    async fn request_body_into_string(body: Response<Body>) -> Result<Vec<u8>, Error> {
-        let mut body = body.into_body();
-        let mut out = Vec::new();
-        while let Some(chunk) = body.next().await {
-            let chunk = chunk?;
-            out.extend_from_slice(chunk.as_ref());
-        }
-        Ok(out)
-    };
     let https = hyper_tls::HttpsConnector::new(1)?;
     let client = Client::builder().build::<_, Body>(https);
 
