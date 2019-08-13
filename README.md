@@ -67,3 +67,8 @@ Search the code for `TODO` to learn about workarounds/issues still present.
 ### Changes
 
 #### v1.0.0 - Initial Release
+
+
+### Reference
+
+[This gist](https://gist.github.com/yyx990803/7745157) got me interested in writing a Rust version of it.
