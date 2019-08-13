@@ -76,10 +76,9 @@ pub async fn count_stars(
     // to have the closure own these after they have been used.
 
     // TODO: is there an easy way to abort all unresolved futures if one of them failed?
-    let orgs = futures::future::join_all(
-        orgs.into_iter()
-            .map(|user| request::json_log_failure::<User>(format!("users/{}",user.login), auth.clone())),
-    )
+    let orgs = futures::future::join_all(orgs.into_iter().map(|user| {
+        request::json_log_failure::<User>(format!("users/{}", user.login), auth.clone())
+    }))
     .await;
     let repos: Vec<_> = futures::future::join_all(
         iter::once(user)
@@ -102,7 +101,7 @@ pub async fn count_stars(
     .filter_map(|v| v.ok())
     .flatten()
     .collect();
-    output(repos, repo_limit, stargazer_threshold, out)
+    output(username, repos, repo_limit, stargazer_threshold, out)
 }
 
 async fn fetch_repos<F>(
@@ -127,21 +126,59 @@ where
 }
 
 fn output(
+    username: &str,
     mut repos: Vec<Repo>,
     repo_limit: usize,
     stargazer_threshold: usize,
     mut out: impl io::Write,
 ) -> Result<(), Error> {
     let total: usize = repos.iter().map(|r| r.stargazers_count).sum();
+    let compare_username_matches = |want: bool| {
+        move |r: &Repo| {
+            if r.owner.login.eq(username) == want {
+                Some(r.stargazers_count)
+            } else {
+                None
+            }
+        }
+    };
+    let total_by_user_only: Vec<_> = repos
+        .iter()
+        .filter_map(compare_username_matches(true))
+        .collect();
+    let total_by_orgs_only: Vec<_> = repos
+        .iter()
+        .filter_map(compare_username_matches(false))
+        .collect();
 
     writeln!(out, "Total: {}", total)?;
+    if !total_by_user_only.is_empty() {
+        writeln!(
+            out,
+            "Total for {}: {}",
+            username,
+            total_by_user_only.iter().sum::<usize>()
+        )?;
+    }
+    if !total_by_orgs_only.is_empty() {
+        writeln!(
+            out,
+            "Total for orgs: {}",
+            total_by_orgs_only.iter().sum::<usize>()
+        )?;
+    }
 
     repos.sort_by(|a, b| b.stargazers_count.cmp(&a.stargazers_count));
-    let repos: Vec<_> = repos
-        .iter()
+    let mut repos: Vec<_> = repos
+        .into_iter()
         .filter(|r| r.stargazers_count >= stargazer_threshold)
         .take(repo_limit)
         .collect();
+    if !total_by_orgs_only.is_empty() {
+        for mut repo in repos.iter_mut() {
+            repo.name = format!("{}/{}", repo.owner.login, repo.name);
+        }
+    }
     let longest_name_len = repos.iter().map(|r| r.name.len()).max().unwrap_or(0);
 
     if repos.len() > 0 {

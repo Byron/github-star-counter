@@ -2,6 +2,7 @@ use super::*;
 use pretty_assertions::assert_eq;
 use serde_json;
 
+static USERNAME: &str = "Byron";
 static USER_JSON: &str = include_str!("../test/fixtures/github.com-byron.json");
 static PAGE1_JSON: &str = include_str!("../test/fixtures/github.com-byron-repos-page-1.json");
 static USER_OUTPUT: &str = include_str!("../test/fixtures/github.com-byron-output.txt");
@@ -15,7 +16,7 @@ lazy_static! {
 #[test]
 fn output_repos() {
     let mut buf = Vec::new();
-    output(REPOS.clone(), 10, 0, &mut buf).unwrap();
+    output(USERNAME, REPOS.clone(), 10, 0, &mut buf).unwrap();
 
     assert_eq!(String::from_utf8(buf).unwrap(), USER_OUTPUT);
 }
@@ -23,7 +24,7 @@ fn output_repos() {
 #[test]
 fn output_repos_with_threshold() {
     let mut buf = Vec::new();
-    output(REPOS.clone(), 10, 30, &mut buf).unwrap();
+    output(USERNAME, REPOS.clone(), 10, 30, &mut buf).unwrap();
 
     assert_eq!(String::from_utf8(buf).unwrap(), USER_OUTPUT_THRESHOLD_30);
 }
