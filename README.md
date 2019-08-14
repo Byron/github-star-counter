@@ -7,6 +7,9 @@ It features the following capabilities:
 
 The code was done synchronously first, and then moved to async with a surprisingly small amount of
 changes.
+It was interesting to see how the `ascync` constructs allow to control parallelism precisely, to the
+point where I was able to design interdependent futures to match the data dependency. That way, things
+run concurrently when they can run concurrently, which can be visualized like a dependency graph.
 
 The greatest difficulties were around getting https to work. Besides, it's clearly a learning process
 to understand the implications of futures better. Constructs with `async` tend to _look_ synchronous,
@@ -65,10 +68,37 @@ Search the code for `TODO` to learn about workarounds/issues still present.
 
 ### Changes
 
+For the parallelism diagrams, a data point prefixed with `*` signals that multiple data is handled at the same time.
+
+#### v1.0.2 - Even more parallel query of user's repositories
+
+Parallelism looks like this:
+```
+ user-info+---->orgs-info+---->*(user-of-orgs+---->*repo-info-page)
+          |
+          |
+          +---->*repo-info-page
+```
+Now it's as parallel as it can be, based on the data dependency. This is real nice actually!
+
 #### v1.0.1 - More parallel query of user's repositories
+
+Parallelism looks like this:
+```
+user-info+---->orgs-info+-+-->*(user-of-orgs+---->*repo-info-page)
+         |                |                       ^
+         |          wait  |                       |
+         +----------------+-----------------------^
+```
+We don't wait for fetching org user info, but still wait for orgs information before anything makes progress.
+Fetching repo information for the main user waits longer than needed.
 
 #### v1.0.0 - Initial Release
 
+Parallelism looks like this:
+```
+user-info+---->orgs-info+--->*(user-of-orgs-and-main-user+---->*repo-info-page)
+```
 
 ### Reference
 
