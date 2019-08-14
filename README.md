@@ -71,6 +71,10 @@ Search the code for `TODO` to learn about workarounds/issues still present.
 
 For the parallelism diagrams, a data point prefixed with `*` signals that multiple data is handled at the same time.
 
+#### v1.0.4 - Even better progress - less is more
+
+Just show the aggregated result
+
 #### v1.0.3 - Better progress messages
 
 Even though the header is parsed and received relatively quickly, the body is read afterwards which takes additional time.

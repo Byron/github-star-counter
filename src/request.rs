@@ -67,12 +67,9 @@ where
     info!("{} - requested", url);
     let started = std::time::Instant::now();
     let res = client.request(req).await?;
-    info!("{} - header received in {:?}", url, started.elapsed());
-
     let status = res.status();
-    let started = std::time::Instant::now();
     let bytes = request_body_into_string(res).await?;
-    info!("{} - body received in {:?}", url, started.elapsed());
+    info!("{} - received in {:?}", url, started.elapsed());
 
     if status.is_success() {
         Ok(serde_json::from_slice(&bytes)?)
