@@ -67,8 +67,6 @@ pub async fn count_stars(
         stargazer_threshold,
     }: Options,
 ) -> Result<(), Error> {
-    use std::iter;
-
     let user_url = format!("users/{}", username);
     let user: User = request::json(user_url.clone(), auth.clone()).await?;
     let orgs_url = format!("{}/orgs", user_url);
@@ -83,36 +81,34 @@ pub async fn count_stars(
             request::json_log_failure(repos_paged_url, auth.clone())
         })
     };
-    let fetch_main_user_future = fetch_repos_for_user(user);
-    let fetch_orgs_repos_futures = if !no_orgs {
-        let orgs: Vec<RepoOwner> = request::json(orgs_url, auth.clone()).await?;
+    let mut user_repos_futures = vec![fetch_repos_for_user(user).boxed_local()];
+    if !no_orgs {
+        let auth = auth.clone();
+        let orgs_repos_future = async move {
+            let orgs: Vec<RepoOwner> = request::json_log_failure(orgs_url, auth.clone())
+                .await
+                .unwrap_or_else(|_| Vec::new());
 
-        // TODO make this into 'async' (without move) closure so we don't move these
-        // It's strange that the move happening at the end is not allowed, it should be fine
-        // to have the closure own these after they have been used.
-
-        // TODO: is there an easy way to abort all unresolved futures if one of them failed?
-        orgs.into_iter()
-            .map(|user| {
+            let repos_of_orgs = futures::future::join_all(orgs.into_iter().map(|user| {
                 request::json_log_failure::<User>(format!("users/{}", user.login), auth.clone())
                     .and_then(fetch_repos_for_user)
-            })
-            .collect()
-    } else {
-        Vec::new()
+            }))
+            .await
+            .into_iter()
+            .flatten()
+            .flatten()
+            .collect::<Vec<_>>();
+            Ok(repos_of_orgs)
+        }
+            .boxed_local();
+        user_repos_futures.push(orgs_repos_future);
     };
-    let repos: Vec<_> = futures::future::join_all(
-        iter::once(fetch_main_user_future.boxed_local()).chain(
-            fetch_orgs_repos_futures
-                .into_iter()
-                .map(|f| f.boxed_local()),
-        ),
-    )
-    .await
-    .into_iter()
-    .filter_map(|v| v.ok())
-    .flatten()
-    .collect();
+    let repos: Vec<_> = futures::future::join_all(user_repos_futures)
+        .await
+        .into_iter()
+        .filter_map(|v| v.ok())
+        .flatten()
+        .collect();
     output(username, repos, repo_limit, stargazer_threshold, out)
 }
 
