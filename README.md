@@ -7,7 +7,7 @@ It features the following capabilities:
 
 The code was done synchronously first, and then moved to async with a surprisingly small amount of
 changes.
-It was interesting to see how the [`ascync` constructs](https://github.com/Byron/github-star-counter/blob/2568d2faea0242b37f0cc48793f164c2d5ee3fc9/src/lib.rs#L87)
+It was interesting to see how the [`ascync` constructs](https://github.com/Byron/github-star-counter/blob/e3746b9182a28a9e9a9e8dd55cdb660f6b1b97df/src/lib.rs#L90)
 allow to control parallelism precisely, to the point where I was able to design interdependent
 futures to match the data dependency. That way, things run concurrently when they can run concurrently, 
 which can be visualized neatly with a dependency graph.
