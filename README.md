@@ -67,7 +67,7 @@ Search the code for `TODO` to learn about workarounds/issues still present.
 * I would be interested in something like `collect::Result<Vec<Value>, Error>` for `Vec<Future<Output = Result<Value, Error>>>`. `join_all` won't abort on first error, but I think it should be possible to implement such functionality based on it.
 * Defining a closure with `let mut closure: impl FnMut(User, usize) -> impl Future<Output = Value>` doesn't seem to work. The closure return type must be a type parameter.
 
-### Changes
+### Changelog
 
 For the parallelism diagrams, a data point prefixed with `*` signals that multiple data is handled at the same time.
 

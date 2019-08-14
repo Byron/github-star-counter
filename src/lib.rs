@@ -6,7 +6,7 @@
 extern crate lazy_static;
 
 pub use crate::request::BasicAuth;
-use futures::future::join_all;
+use futures::future::join_all as join_all_futures;
 use futures::{FutureExt, TryFutureExt};
 use itertools::Itertools;
 use serde::Deserialize;
@@ -67,9 +67,6 @@ pub async fn count_stars(
         stargazer_threshold,
     }: Options,
 ) -> Result<(), Error> {
-    let user_url = format!("users/{}", username);
-    let user: User = request::json(user_url.clone(), auth.clone()).await?;
-    let orgs_url = format!("{}/orgs", user_url);
     let fetch_repos_for_user = |user| {
         fetch_repos(user, page_size, |user, page_number| {
             let repos_paged_url = format!(
@@ -81,7 +78,13 @@ pub async fn count_stars(
             request::json_log_failure(repos_paged_url, auth.clone())
         })
     };
+    let flatten_into_vec = |vec: Vec<_>| vec.into_iter().flatten().flatten().collect::<Vec<_>>();
+
+    let user_url = format!("users/{}", username);
+    let user: User = request::json(user_url.clone(), auth.clone()).await?;
+    let orgs_url = format!("{}/orgs", user_url);
     let mut user_repos_futures = vec![fetch_repos_for_user(user).boxed_local()];
+
     if !no_orgs {
         let auth = auth.clone();
         let orgs_repos_future = async move {
@@ -89,26 +92,20 @@ pub async fn count_stars(
                 .await
                 .unwrap_or_else(|_| Vec::new());
 
-            let repos_of_orgs = futures::future::join_all(orgs.into_iter().map(|user| {
-                request::json_log_failure::<User>(format!("users/{}", user.login), auth.clone())
-                    .and_then(fetch_repos_for_user)
-            }))
-            .await
-            .into_iter()
-            .flatten()
-            .flatten()
-            .collect::<Vec<_>>();
+            let repos_of_orgs = flatten_into_vec(
+                join_all_futures(orgs.into_iter().map(|user| {
+                    request::json_log_failure::<User>(format!("users/{}", user.login), auth.clone())
+                        .and_then(fetch_repos_for_user)
+                }))
+                .await,
+            );
             Ok(repos_of_orgs)
         }
             .boxed_local();
         user_repos_futures.push(orgs_repos_future);
     };
-    let repos: Vec<_> = futures::future::join_all(user_repos_futures)
-        .await
-        .into_iter()
-        .filter_map(|v| v.ok())
-        .flatten()
-        .collect();
+
+    let repos = flatten_into_vec(join_all_futures(user_repos_futures).await);
     output(username, repos, repo_limit, stargazer_threshold, out)
 }
 
@@ -124,11 +121,11 @@ where
         return Err("PageSize must be greater than 0".into());
     }
     let page_count = user.public_repos / page_size;
-    let futures = (0..=page_count).map(|page_number| fetch_page(user.clone(), page_number));
-    let results: Vec<Result<Vec<Repo>, Error>> = join_all(futures).await;
+    let page_futures = (0..=page_count).map(|page_number| fetch_page(user.clone(), page_number));
+    let results = join_all_futures(page_futures).await;
     Ok(results
         .into_iter()
-        .collect::<Result<Vec<_>, Error>>()?
+        .collect::<Result<Vec<Vec<_>>, Error>>()?
         .into_iter()
         .concat())
 }
