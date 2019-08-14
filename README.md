@@ -45,6 +45,30 @@ count-github-stars Byron
 count-github-stars --help
 ```
 
+A more complete example, showing how massive the speedups can be.
+```
+count-github-stars --log-level INFO seanmonstar
+#[... some output truncated ...]
+2019-08-14 17:06:47,170 INFO  [github_star_counter] Total bytes received in body: 11.5 MB
+2019-08-14 17:06:47,170 INFO  [github_star_counter] Total time spent in network requests: 602.04s
+2019-08-14 17:06:47,170 INFO  [github_star_counter] Wallclock time for future processing: 28.02s
+2019-08-14 17:06:47,170 INFO  [github_star_counter] Speedup due to networking concurrency: 21.49x
+Total: 214264
+Total for seanmonstar: 3814
+Total for orgs: 210450
+
+mozilla/pdf.js         ★  27606
+mozilla/DeepSpeech     ★  10893
+mozilla/BrowserQuest   ★  8248
+mozilla/send           ★  8159
+mozilla/togetherjs     ★  6392
+mozilla/nunjucks       ★  6204
+tokio-rs/tokio         ★  5588
+linkerd/linkerd        ★  5041
+hyperium/hyper         ★  5029
+linkerd/linkerd2       ★  4341
+```
+
 ### Development
 
 ```bash
