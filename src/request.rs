@@ -2,6 +2,15 @@ use super::Error;
 use hyper::{Body, Client, Request, Response};
 use log::{error, info};
 use serde::{de::DeserializeOwned, Deserialize};
+use std::ops::AddAssign;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Mutex;
+use std::time::Duration;
+
+lazy_static! {
+    pub static ref TOTAL_DURATION: Mutex<Duration> = Mutex::new(Duration::default());
+    pub static ref TOTAL_BYTES_RECEIVED_IN_BODY: AtomicU64 = AtomicU64::default();
+}
 
 #[derive(Clone)]
 pub struct BasicAuth {
@@ -69,7 +78,15 @@ where
     let res = client.request(req).await?;
     let status = res.status();
     let bytes = request_body_into_string(res).await?;
-    info!("{} - received in {:?}", url, started.elapsed());
+    let elapsed = started.elapsed();
+    info!(
+        "{} - received in {:?} ({})",
+        url,
+        elapsed,
+        bytesize::ByteSize(bytes.len() as u64)
+    );
+    TOTAL_DURATION.lock().unwrap().add_assign(elapsed);
+    TOTAL_BYTES_RECEIVED_IN_BODY.fetch_add(bytes.len() as u64, Ordering::Relaxed);
 
     if status.is_success() {
         Ok(serde_json::from_slice(&bytes)?)

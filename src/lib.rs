@@ -2,15 +2,16 @@
 #![feature(async_await)]
 
 #[macro_use]
-#[cfg(test)]
 extern crate lazy_static;
-
 pub use crate::request::BasicAuth;
+use bytesize::ByteSize;
 use futures::future::join_all as join_all_futures;
 use futures::{FutureExt, TryFutureExt};
 use itertools::Itertools;
+use log::info;
 use serde::Deserialize;
-use std::{future::Future, io};
+use std::sync::atomic::Ordering;
+use std::{future::Future, io, time::Instant};
 
 mod request;
 
@@ -105,7 +106,28 @@ pub async fn count_stars(
         user_repos_futures.push(orgs_repos_future);
     };
 
+    let start = Instant::now();
     let repos = flatten_into_vec(join_all_futures(user_repos_futures).await);
+
+    let elapsed = start.elapsed();
+    let duration_in_network_requests = request::TOTAL_DURATION.lock().unwrap().as_secs_f32();
+    info!(
+        "Total bytes received in body: {}",
+        ByteSize(request::TOTAL_BYTES_RECEIVED_IN_BODY.load(Ordering::Relaxed))
+    );
+    info!(
+        "Total time spent in network requests: {:.2}s",
+        duration_in_network_requests
+    );
+    info!(
+        "Wallclock time for future processing: {:.2}s",
+        elapsed.as_secs_f32()
+    );
+    info!(
+        "Speedup due to networking concurrency: {:.2}x",
+        duration_in_network_requests / elapsed.as_secs_f32()
+    );
+
     output(username, repos, repo_limit, stargazer_threshold, out)
 }
 
