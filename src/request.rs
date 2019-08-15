@@ -1,11 +1,11 @@
 use super::Error;
 use hyper::{Body, Client, Request, Response};
+use log::{error, info};
 use serde::{de::DeserializeOwned, Deserialize};
 use std::ops::AddAssign;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Mutex;
 use std::time::Duration;
-use tracing::{error, info};
 
 lazy_static! {
     pub static ref TOTAL_DURATION: Mutex<Duration> = Mutex::new(Duration::default());

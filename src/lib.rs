@@ -8,10 +8,9 @@ use bytesize::ByteSize;
 use futures::future::join_all as join_all_futures;
 use futures::{FutureExt, TryFutureExt};
 use itertools::Itertools;
+use log::{error, info};
 use serde::Deserialize;
-use std::sync::atomic::Ordering;
-use std::{future::Future, io, time::Instant};
-use tracing::{error, info};
+use std::{future::Future, io, sync::atomic::Ordering, time::Instant};
 
 mod request;
 

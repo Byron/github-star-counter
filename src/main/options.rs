@@ -1,7 +1,7 @@
 use super::Options;
 use github_star_counter::BasicAuth;
+use log::Level;
 use structopt::StructOpt;
-use tracing::Level;
 
 #[derive(Debug, StructOpt)]
 #[structopt(about = "Aggregate your repositories' stars in GitHub!")]
