@@ -8,7 +8,7 @@ use bytesize::ByteSize;
 use futures::future::join_all as join_all_futures;
 use futures::{FutureExt, TryFutureExt};
 use itertools::Itertools;
-use log::info;
+use log::{error, info};
 use serde::Deserialize;
 use std::sync::atomic::Ordering;
 use std::{future::Future, io, time::Instant};
@@ -78,6 +78,10 @@ pub async fn count_stars(
             );
             request::json_log_failure(repos_paged_url, auth.clone())
         })
+        .map_err(|e| {
+            error!("Could not fetch repositories: {}", e);
+            e
+        })
     };
     let flatten_into_vec = |vec: Vec<_>| vec.into_iter().flatten().flatten().collect::<Vec<_>>();
 
@@ -145,11 +149,37 @@ where
     let page_count = user.public_repos / page_size;
     let page_futures = (0..=page_count).map(|page_number| fetch_page(user.clone(), page_number));
     let results = join_all_futures(page_futures).await;
-    Ok(results
+    let pages_with_results: Vec<Vec<Repo>> = results
         .into_iter()
         .collect::<Result<Vec<Vec<_>>, Error>>()?
         .into_iter()
-        .concat())
+        .collect();
+
+    sanity_check(page_size, &pages_with_results);
+    Ok(pages_with_results.into_iter().concat())
+}
+
+fn sanity_check(page_size: usize, pages_with_results: &Vec<Vec<Repo>>) {
+    if pages_with_results.len() > 0 {
+        if let Some(v) = pages_with_results
+            .iter()
+            .take(
+                pages_with_results
+                    .len()
+                    .checked_sub(1)
+                    .expect("more than one page"),
+            )
+            .filter(|v| v.len() != page_size)
+            .next()
+        {
+            panic!(
+                "Asked for {} repos per page, but got only {} in a page which wasn't the last one. --page-size should probably be {}",
+                page_size,
+                v.len(),
+                v.len()
+            );
+        }
+    }
 }
 
 fn output(

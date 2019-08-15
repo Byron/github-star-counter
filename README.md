@@ -25,6 +25,10 @@ unless it truly is the simpler solution.
 Something I look forward to is to see fully-async libraries emerge, for example, to interact with `git`,
 which will probably perform better than existing libraries. _Using_ `async` libraries already is a breeze!
 
+When thinking about the parallelism of this simple application it already becomes evident that one would want to control the amount of in-flight futures. Just imagine
+the adverse effects of making too may concurrent connections to the same host, or the limits of resources imposed by the operating system itself. One would want to 
+have executors who are aware of what kind of future they are running, and have them limit the amount of concurrently running ones.
+
 With `async`, Rust can be even more so change the game!
 
 ### Installation
@@ -45,28 +49,28 @@ count-github-stars Byron
 count-github-stars --help
 ```
 
-A more complete example, showing how massive the speedups can be.
+A more complete example, showing how massive the speedups can be. However, please keep in mind that this can also be contention, e.g. there
+are simply too many concurrent requests which are much slower together than they would be individually.
 ```
-count-github-stars --log-level INFO seanmonstar
-#[... some output truncated ...]
-2019-08-14 17:06:47,170 INFO  [github_star_counter] Total bytes received in body: 11.5 MB
-2019-08-14 17:06:47,170 INFO  [github_star_counter] Total time spent in network requests: 602.04s
-2019-08-14 17:06:47,170 INFO  [github_star_counter] Wallclock time for future processing: 28.02s
-2019-08-14 17:06:47,170 INFO  [github_star_counter] Speedup due to networking concurrency: 21.49x
-Total: 214264
-Total for seanmonstar: 3814
-Total for orgs: 210450
+2019-08-15 08:47:49,553 INFO  [github_star_counter] Total bytes received in body: 11.5 MB
+2019-08-15 08:47:49,553 INFO  [github_star_counter] Total time spent in network requests: 366.84s
+2019-08-15 08:47:49,553 INFO  [github_star_counter] Wallclock time for future processing: 22.62s
+2019-08-15 08:47:49,553 INFO  [github_star_counter] Speedup due to networking concurrency: 16.22x
+Total: 214379
+Total for seanmonstar: 3818
+Total for orgs: 210561
 
-mozilla/pdf.js         ★  27606
-mozilla/DeepSpeech     ★  10893
-mozilla/BrowserQuest   ★  8248
-mozilla/send           ★  8159
-mozilla/togetherjs     ★  6392
-mozilla/nunjucks       ★  6204
-tokio-rs/tokio         ★  5588
-linkerd/linkerd        ★  5041
-hyperium/hyper         ★  5029
-linkerd/linkerd2       ★  4341
+mozilla/pdf.js         ★  27611
+mozilla/DeepSpeech     ★  10899
+mozilla/BrowserQuest   ★  8249
+mozilla/send           ★  8165
+mozilla/togetherjs     ★  6393
+mozilla/nunjucks       ★  6207
+tokio-rs/tokio         ★  5598
+linkerd/linkerd        ★  5042
+hyperium/hyper         ★  5031
+linkerd/linkerd2       ★  4342
+➜
 ```
 
 ### Development
@@ -94,6 +98,11 @@ Search the code for `TODO` to learn about workarounds/issues still present.
 ### Changelog
 
 For the parallelism diagrams, a data point prefixed with `*` signals that multiple data is handled at the same time.
+
+#### v1.0.6 - Assurance of correctness
+
+Github can silently adjust the page size, e.g. one asks for 1000 items per page and generates queries accordingly, but it will respond only with 100.
+Now we check and abort with a suggested page size, if the given one was not correct. The current page size seems to be limited to 100.
 
 #### v1.0.5 - Better performance metrics
 

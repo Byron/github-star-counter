@@ -11,7 +11,7 @@ pub struct Args {
     #[structopt(long = "no-orgs")]
     pub no_orgs: bool,
     /// The amount of repositories per page when asking for your repository details
-    #[structopt(short = "p", long = "page-size", default_value = "50")]
+    #[structopt(short = "p", long = "page-size", default_value = "100")]
     pub page_size: usize,
     /// The amount of repositories to displays at most. Set it to 0 to only see your total stars
     #[structopt(short = "r", long = "repo-limit", default_value = "10")]

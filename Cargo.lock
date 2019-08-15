@@ -363,7 +363,7 @@ dependencies = [
 
 [[package]]
 name = "github-star-counter"
-version = "1.0.5"
+version = "1.0.6"
 dependencies = [
  "base64 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "bytesize 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
