@@ -18,7 +18,7 @@ path = "src/main/mod.rs"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0.40"
 itertools = "0.8.0"
-futures-preview = { version = "=0.3.0-alpha.18", features = ["async-await", "nightly"] }
+futures-preview = { version = "=0.3.0-alpha.17", features = ["async-await", "nightly"] }
 #tokio = { git = "https://github.com/tokio-rs/tokio", version = "0.2.0-alpha.1", rev = "8d55f98f6fbd6cda5093f0ace9eb31e6c06f3e8d" }
 tokio = "0.2.0-alpha.1"
 base64 = "0.10.1"
@@ -37,14 +37,14 @@ bytesize = "1.0.0"
 # [patch."https://github.com/hyperium/hyper"]
 # hyper = { git = "https://github.com/Byron/hyper" }
 
-[patch.crates-io]
-tokio = { git = "https://github.com/tokio-rs/tokio", rev = "8d55f98f6fbd6cda5093f0ace9eb31e6c06f3e8d" }
-tokio-io = { git = "https://github.com/tokio-rs/tokio", rev = "8d55f98f6fbd6cda5093f0ace9eb31e6c06f3e8d" }
-tokio-reactor = { git = "https://github.com/tokio-rs/tokio", rev = "8d55f98f6fbd6cda5093f0ace9eb31e6c06f3e8d" }
-tokio-sync = { git = "https://github.com/tokio-rs/tokio", rev = "8d55f98f6fbd6cda5093f0ace9eb31e6c06f3e8d" }
-tokio-tcp = { git = "https://github.com/tokio-rs/tokio", rev = "8d55f98f6fbd6cda5093f0ace9eb31e6c06f3e8d" }
-tokio-threadpool = { git = "https://github.com/tokio-rs/tokio", rev = "8d55f98f6fbd6cda5093f0ace9eb31e6c06f3e8d" }
-tokio-timer = { git = "https://github.com/tokio-rs/tokio", rev = "8d55f98f6fbd6cda5093f0ace9eb31e6c06f3e8d" }
+#[patch.crates-io]
+#tokio = { git = "https://github.com/tokio-rs/tokio", rev = "8d55f98f6fbd6cda5093f0ace9eb31e6c06f3e8d" }
+#tokio-io = { git = "https://github.com/tokio-rs/tokio", rev = "8d55f98f6fbd6cda5093f0ace9eb31e6c06f3e8d" }
+#tokio-reactor = { git = "https://github.com/tokio-rs/tokio", rev = "8d55f98f6fbd6cda5093f0ace9eb31e6c06f3e8d" }
+#tokio-sync = { git = "https://github.com/tokio-rs/tokio", rev = "8d55f98f6fbd6cda5093f0ace9eb31e6c06f3e8d" }
+#tokio-tcp = { git = "https://github.com/tokio-rs/tokio", rev = "8d55f98f6fbd6cda5093f0ace9eb31e6c06f3e8d" }
+#tokio-threadpool = { git = "https://github.com/tokio-rs/tokio", rev = "8d55f98f6fbd6cda5093f0ace9eb31e6c06f3e8d" }
+#tokio-timer = { git = "https://github.com/tokio-rs/tokio", rev = "8d55f98f6fbd6cda5093f0ace9eb31e6c06f3e8d" }
 
 [dev-dependencies]
 pretty_assertions = "0.6.1"
