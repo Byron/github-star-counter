@@ -99,6 +99,12 @@ Search the code for `TODO` to learn about workarounds/issues still present.
 
 For the parallelism diagrams, a data point prefixed with `*` signals that multiple data is handled at the same time.
 
+#### v1.0.7 - Remove code by using `surf`
+
+It was easy to use, felt well thought out, was perfectly documented, and... worked!
+
+https://docs.rs/surf
+
 #### v1.0.6 - Assurance of correctness
 
 Github can silently adjust the page size, e.g. one asks for 1000 items per page and generates queries accordingly, but it will respond only with 100.
