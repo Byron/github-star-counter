@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/Byron/github-star-counter.svg?branch=master)](https://travis-ci.org/Byron/github-star-counter)
+
 This program is made just for trying async-await code in the current ecosystem.
 It features the following capabilities:
 
