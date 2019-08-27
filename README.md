@@ -36,10 +36,8 @@ With `async`, Rust can be even more so change the game!
 ### Installation
 
 ```bash
-cargo install --git https://github.com/Byron/github-star-counter
+cargo install github-star-counter
 ```
-
-Currently this crate cannot be published to _crates.io_.
 
 ### Running and usage
 

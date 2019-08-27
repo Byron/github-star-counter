@@ -1,6 +1,6 @@
 [package]
 name = "github-star-counter"
-version = "1.0.6"
+version = "1.0.7"
 authors = ["Sebastian Thiel <sthiel@thoughtworks.com>"]
 edition = "2018"
 repository = "https://github.com/Byron/github-star-counter"
