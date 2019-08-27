@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2019 Sebastian Thiel, and [others](https://github.com/Byron/github-star-counter).
+Copyright (c) 2019 Sebastian Thiel, and [others](https://github.com/Byron/github-star-counter/contributors).
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
