@@ -49,7 +49,7 @@ impl Default for Options {
         Self {
             auth: None,
             no_orgs: false,
-            page_size: 100,
+            page_size: 70,
             repo_limit: 10,
             stargazer_threshold: 0,
         }

@@ -4,6 +4,8 @@ version = "1.0.6"
 authors = ["Sebastian Thiel <sthiel@thoughtworks.com>"]
 edition = "2018"
 repository = "https://github.com/Byron/github-star-counter"
+description = "A tool to query direct (and indirect) stars of a GitHub user or organizations"
+categories = ["command line utilities"]
 readme = "README.md"
 exclude = ["/test/"]
 
