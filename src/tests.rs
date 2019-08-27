@@ -36,7 +36,7 @@ async fn fetch_all_repos_paged() {
     repos_twice.extend_from_slice(&REPOS);
     let mut user: User = USER.clone();
     user.public_repos = repos_twice.len();
-    const PAGE_SIZE: usize = 100;
+    const PAGE_SIZE: usize = 50;
     let fetch_page_calls = AtomicUsize::new(0);
 
     // FETCH with paging
