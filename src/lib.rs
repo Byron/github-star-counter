@@ -49,7 +49,7 @@ impl Default for Options {
         Self {
             auth: None,
             no_orgs: false,
-            page_size: 70,
+            page_size: 100,
             repo_limit: 10,
             stargazer_threshold: 0,
         }
@@ -158,6 +158,10 @@ where
     Ok(pages_with_results.into_iter().concat())
 }
 
+#[cfg(test)]
+fn sanity_check(page_size: usize, pages_with_results: &Vec<Vec<Repo>>) { }
+
+#[cfg(not(test))]
 fn sanity_check(page_size: usize, pages_with_results: &Vec<Vec<Repo>>) {
     if pages_with_results.len() > 0 {
         if let Some(v) = pages_with_results
