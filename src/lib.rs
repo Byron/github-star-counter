@@ -159,7 +159,7 @@ where
 }
 
 #[cfg(test)]
-fn sanity_check(_page_size: usize, _pages_with_results: &Vec<Vec<Repo>>) { }
+fn sanity_check(_page_size: usize, _pages_with_results: &Vec<Vec<Repo>>) {}
 
 #[cfg(not(test))]
 fn sanity_check(page_size: usize, pages_with_results: &Vec<Vec<Repo>>) {

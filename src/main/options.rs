@@ -18,7 +18,7 @@ pub struct Args {
     pub repo_limit: usize,
     /// The desired log level. Only 'INFO' is implemented right now to provide timing information.
     #[structopt(short = "l", long = "log-level", default_value = "ERROR")]
-    #[structopt(raw(possible_values = r#"&["INFO", "ERROR", "DEBUG"]"#))]
+    #[structopt(possible_values = &["INFO", "ERROR", "DEBUG"])]
     pub log_level: Level,
     /// The amount of stars a repository should have at the least to be considered for the repository list.
     /// Note that this does not affect your total star count.
