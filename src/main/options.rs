@@ -1,6 +1,5 @@
-use super::Options;
-use github_star_counter::BasicAuth;
 use log::Level;
+use std::path::PathBuf;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -25,6 +24,10 @@ pub struct Args {
     /// If 0, all repositories are considered.
     #[structopt(short = "s", long = "stargazer-threshold", default_value = "1")]
     pub stargazer_threshold: usize,
+    /// If set, use the template from this path to render the output.
+    /// The expected format is documented [here](https://tera.netlify.com/).
+    #[structopt(short = "t", long = "template", parse(from_os_str))]
+    pub template: Option<PathBuf>,
     #[structopt(flatten)]
     pub auth: RequestUser,
     /// The name of the github user, like "Byron"
@@ -36,7 +39,7 @@ pub struct RequestUser {
     /// The name of the user to use for authenticated requests against the API.
     /// Use this if you run into issues with github API usage limits
     #[structopt(short = "u", long = "request-username")]
-    request_username: Option<String>,
+    pub request_username: Option<String>,
     /// The password of the user to use for authenticated requests against the API.
     /// Use this if you run into issues with github API usage limits
     /// Be sure to prefix the whole command with a single space to prevent it from
@@ -45,34 +48,5 @@ pub struct RequestUser {
     /// If only the password is provided, the user for which stars are counted is used
     /// as --request-username
     #[structopt(long = "request-password")]
-    request_password: Option<String>,
-}
-
-impl From<Args> for Options {
-    fn from(
-        Args {
-            no_orgs,
-            repo_limit,
-            stargazer_threshold,
-            page_size,
-            auth,
-            username,
-            ..
-        }: Args,
-    ) -> Self {
-        Options {
-            no_orgs,
-            page_size,
-            repo_limit,
-            stargazer_threshold,
-            auth: match (auth.request_username, auth.request_password) {
-                (Some(username), password) => Some(BasicAuth { username, password }),
-                (None, Some(password)) => Some(BasicAuth {
-                    username,
-                    password: Some(password),
-                }),
-                _ => None,
-            },
-        }
-    }
+    pub request_password: Option<String>,
 }
