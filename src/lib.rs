@@ -1,3 +1,5 @@
+#![cfg_attr(test, feature(async_closure))]
+
 #[macro_use]
 extern crate lazy_static;
 pub use crate::request::BasicAuth;
