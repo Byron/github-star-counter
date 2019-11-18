@@ -1,11 +1,18 @@
 use crate::request::BasicAuth;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct Repo {
     pub stargazers_count: usize,
     pub name: String,
     pub owner: RepoOwner,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
+pub struct RepoStats {
+    pub total: usize,
+    pub total_by_user_only: Vec<usize>,
+    pub total_by_orgs_only: Vec<usize>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]

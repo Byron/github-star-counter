@@ -61,7 +61,7 @@ pub async fn count_stars(
             );
             Ok(repos_of_orgs)
         }
-            .boxed_local();
+        .boxed_local();
         user_repos_futures.push(orgs_repos_future);
     };
 
