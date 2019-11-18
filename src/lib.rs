@@ -1,4 +1,4 @@
-#![feature(async_closure)]
+#![cfg_attr(test, feature(async_closure))]
 
 #[macro_use]
 extern crate lazy_static;
