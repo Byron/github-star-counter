@@ -9,6 +9,10 @@ use futures::{FutureExt, TryFutureExt};
 use itertools::Itertools;
 use log::{error, info};
 use std::{future::Future, sync::atomic::Ordering, time::Instant};
+use tera::{Context, Tera};
+use std::fs;
+use std::path::PathBuf;
+use std::fmt::Write;
 
 mod api;
 mod request;
@@ -16,6 +20,23 @@ mod request;
 pub use crate::api::*;
 
 pub type Error = Box<dyn std::error::Error>;
+
+fn filter_repos(repos: &Vec<Repo>, user_login: String, is_user: bool) -> Vec<usize> {
+    let compare_username_matches = |want: bool, user: String| {
+        move |r: &Repo| {
+            if r.owner.login.eq(&user) == want {
+                Some(r.stargazers_count)
+            } else {
+                None
+            }
+        }
+    };
+
+    repos
+        .iter()
+        .filter_map(compare_username_matches(is_user, user_login.clone()))
+        .collect()
+}
 
 pub async fn count_stars(
     username: &str,
@@ -139,6 +160,100 @@ fn sanity_check(page_size: usize, pages_with_results: &Vec<Vec<Repo>>) {
             );
         }
     }
+}
+
+fn get_stats(repos: &Vec<Repo>, login: String) -> RepoStats {
+    let total: usize = repos.iter().map(|r| r.stargazers_count).sum();
+    let total_by_user_only = filter_repos(&repos, login.clone(), true);
+    let total_by_orgs_only = filter_repos(&repos, login.clone(), false);
+
+    RepoStats {
+        total,
+        total_by_user_only,
+        total_by_orgs_only,
+    }
+}
+
+pub fn render_output(
+    template: Option<PathBuf>,
+    mut repos: Vec<Repo>,
+    login: String,
+    repo_limit: usize,
+    stargazer_threshold: usize,
+) -> Result<String, Error> {
+    let stats = get_stats(&repos, login.to_string());
+
+    repos.sort_by(|a, b| b.stargazers_count.cmp(&a.stargazers_count));
+    let mut repos: Vec<_> = repos
+        .into_iter()
+        .filter(|r| r.stargazers_count >= stargazer_threshold)
+        .take(repo_limit)
+        .collect();
+
+    if !stats.total_by_orgs_only.is_empty() {
+        for mut repo in repos.iter_mut() {
+            repo.name = format!("{}/{}", repo.owner.login, repo.name);
+        }
+    }
+
+    match template {
+        Some(template) => template_output(repos, stats, login, template),
+        None => default_output(repos, stats, login),
+    }
+}
+
+pub fn template_output(
+    repos: Vec<Repo>,
+    stats: RepoStats,
+    login: String,
+    template: PathBuf,
+) -> Result<String, Error> {
+    let mut context = Context::new();
+    context.insert("repos", &repos);
+    context.insert("total", &stats.total);
+    context.insert("total_by_user_only", &stats.total_by_user_only);
+    context.insert("total_by_orgs_only", &stats.total_by_orgs_only);
+    context.insert("login", &login);
+
+    let template: String = fs::read_to_string(template)?;
+    let rendered = Tera::one_off(&template, &context, true)?;
+    Ok(rendered)
+}
+
+pub fn default_output(repos: Vec<Repo>, stats: RepoStats, login: String) -> Result<String, Error> {
+    let mut out = String::new();
+    writeln!(out, "Total: {}", stats.total)?;
+    if !stats.total_by_user_only.is_empty() && !stats.total_by_orgs_only.is_empty() {
+        writeln!(
+            out,
+            "Total for {}: {}",
+            login,
+            stats.total_by_user_only.iter().sum::<usize>()
+        )?;
+    }
+    if !stats.total_by_orgs_only.is_empty() {
+        writeln!(
+            out,
+            "Total for orgs: {}",
+            stats.total_by_orgs_only.iter().sum::<usize>()
+        )?;
+    }
+
+    if repos.len() > 0 {
+        writeln!(out)?;
+    }
+
+    let max_width = repos.iter().map(|r| r.name.len()).max().unwrap_or(0);
+    for repo in repos {
+        writeln!(
+            out,
+            "{:width$}   ★  {}",
+            repo.name,
+            repo.stargazers_count,
+            width = max_width
+        )?;
+    }
+    Ok(out)
 }
 
 #[cfg(test)]
