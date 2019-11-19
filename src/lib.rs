@@ -8,11 +8,11 @@ use futures::future::join_all as join_all_futures;
 use futures::{FutureExt, TryFutureExt};
 use itertools::Itertools;
 use log::{error, info};
-use std::{future::Future, sync::atomic::Ordering, time::Instant};
-use tera::{Context, Tera};
+use std::fmt::Write;
 use std::fs;
 use std::path::PathBuf;
-use std::fmt::Write;
+use std::{future::Future, sync::atomic::Ordering, time::Instant};
+use tera::{Context, Tera};
 
 mod api;
 mod request;
@@ -21,7 +21,7 @@ pub use crate::api::*;
 
 pub type Error = Box<dyn std::error::Error>;
 
-fn filter_repos(repos: &Vec<Repo>, user_login: String, is_user: bool) -> Vec<usize> {
+fn filter_repos(repos: &Vec<Repo>, user_login: &str, is_user: bool) -> Vec<usize> {
     let compare_username_matches = |want: bool, user: String| {
         move |r: &Repo| {
             if r.owner.login.eq(&user) == want {
@@ -34,7 +34,7 @@ fn filter_repos(repos: &Vec<Repo>, user_login: String, is_user: bool) -> Vec<usi
 
     repos
         .iter()
-        .filter_map(compare_username_matches(is_user, user_login.clone()))
+        .filter_map(compare_username_matches(is_user, user_login.to_owned()))
         .collect()
 }
 
@@ -82,7 +82,7 @@ pub async fn count_stars(
             );
             Ok(repos_of_orgs)
         }
-        .boxed_local();
+            .boxed_local();
         user_repos_futures.push(orgs_repos_future);
     };
 
@@ -162,10 +162,10 @@ fn sanity_check(page_size: usize, pages_with_results: &Vec<Vec<Repo>>) {
     }
 }
 
-fn get_stats(repos: &Vec<Repo>, login: String) -> RepoStats {
+fn get_stats(repos: &Vec<Repo>, login: &str) -> RepoStats {
     let total: usize = repos.iter().map(|r| r.stargazers_count).sum();
-    let total_by_user_only = filter_repos(&repos, login.clone(), true);
-    let total_by_orgs_only = filter_repos(&repos, login.clone(), false);
+    let total_by_user_only = filter_repos(&repos, login, true);
+    let total_by_orgs_only = filter_repos(&repos, login, false);
 
     RepoStats {
         total,
@@ -181,7 +181,7 @@ pub fn render_output(
     repo_limit: usize,
     stargazer_threshold: usize,
 ) -> Result<String, Error> {
-    let stats = get_stats(&repos, login.to_string());
+    let stats = get_stats(&repos, &login);
 
     repos.sort_by(|a, b| b.stargazers_count.cmp(&a.stargazers_count));
     let mut repos: Vec<_> = repos

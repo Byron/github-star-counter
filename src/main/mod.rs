@@ -1,7 +1,7 @@
 mod options;
 
 extern crate lazy_static;
-use github_star_counter::{render_output, count_stars, BasicAuth, Error, Repo};
+use github_star_counter::{count_stars, render_output, BasicAuth, Error, Repo};
 use options::RequestUser;
 use simple_logger;
 use structopt::StructOpt;
@@ -11,7 +11,7 @@ async fn main() -> Result<(), Error> {
     use options::Args;
     let args: Args = Args::from_args();
     simple_logger::init_with_level(args.log_level).ok();
-    let auth: Option<BasicAuth> = get_auth(args.auth, args.username.clone());
+    let auth: Option<BasicAuth> = get_auth(args.auth, &args.username);
 
     let response = count_stars(&args.username, args.no_orgs, auth, args.page_size).await?;
     let user_login = response.user.login;
@@ -28,11 +28,11 @@ async fn main() -> Result<(), Error> {
     Ok(())
 }
 
-fn get_auth(auth: RequestUser, username: String) -> Option<BasicAuth> {
+fn get_auth(auth: RequestUser, username: &str) -> Option<BasicAuth> {
     match (auth.request_username, auth.request_password) {
         (Some(username), password) => Some(BasicAuth { username, password }),
         (None, Some(password)) => Some(BasicAuth {
-            username: username,
+            username: username.to_owned(),
             password: Some(password),
         }),
         _ => None,
