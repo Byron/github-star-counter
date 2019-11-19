@@ -99,11 +99,10 @@ Search the code for `TODO` to learn about workarounds/issues still present.
 
 For the parallelism diagrams, a data point prefixed with `*` signals that multiple data is handled at the same time.
 
-#### v1.0.7 - Remove code by using `surf`
+#### v1.1.0 - Support for 'tera' templates
 
-It was easy to use, felt well thought out, was perfectly documented, and... worked!
-
-https://docs.rs/surf
+Thanks to the generous contribution of @mre there now is support for rendering to custom tera
+templates. [Look here](https://endler.dev/about/) for an example.
 
 #### v1.0.6 - Assurance of correctness
 
