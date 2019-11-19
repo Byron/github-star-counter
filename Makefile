@@ -5,7 +5,7 @@ help:
 	$(info fixtures              | re-generate fixtures for tests)
 
 tests:
-	cargo test --lib
+	cargo +nightly test --lib
 
 fixtures:
 	curl "https://api.github.com/users/Byron" > test/fixtures/github.com-byron.json
