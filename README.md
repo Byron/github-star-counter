@@ -1,4 +1,6 @@
-[![Build Status](https://travis-ci.org/Byron/github-star-counter.svg?branch=master)](https://travis-ci.org/Byron/github-star-counter)
+![Rust](https://github.com/Byron/github-star-counter/workflows/Rust/badge.svg)
+[![Crates.io](https://img.shields.io/crates/v/github-star-counter.svg)](https://crates.io/crates/github-star-counter)
+
 
 This program is made just for trying async-await code in the current ecosystem.
 It features the following capabilities:
